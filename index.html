@@ -3,17 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
 <title>Касса</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{--bg:#000;--cell:#1C1C1E;--cell-2:#2C2C2E;--cell-3:#3A3A3C;--sep:#38383A;--lbl:#fff;--lbl2:#98989D;--lbl3:#636366;--blue:#0A84FF;--green:#30D158;--red:#FF453A;--orange:#FF9F0A;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+:root[data-theme="light"]{--bg:#F2F2F7;--cell:#fff;--cell-2:#E5E5EA;--cell-3:#D1D1D6;--sep:#C6C6C8;--lbl:#000;--lbl2:#3C3C43;--lbl3:#8E8E93;--blue:#007AFF;--green:#34C759;--red:#FF3B30;--orange:#FF9500}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
-body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:100vh;display:flex;justify-content:center}
+body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:100vh;display:flex;justify-content:center;transition:background .2s,color .2s}
 #app{width:100%;max-width:460px;min-height:100vh;position:relative;padding-bottom:110px}
 .tab-screen{display:none}.tab-screen.active{display:block;animation:fadein .18s ease-out}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
-.large-title{font-size:34px;font-weight:700;letter-spacing:-.02em;padding:calc(env(safe-area-inset-top) + 12px) 16px 6px}
+.top-bar{display:flex;align-items:flex-end;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 12px) 16px 6px}
+.large-title{font-size:34px;font-weight:700;letter-spacing:-.02em;padding:0;margin:0}
+.theme-btn{background:var(--cell-2);border:none;color:var(--lbl);width:38px;height:38px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:4px}
+.theme-btn:active{background:var(--cell-3)}
 .month-switch{display:flex;align-items:center;justify-content:space-between;background:var(--cell-2);border-radius:10px;margin:8px 16px 18px;padding:4px}
 .month-switch button{background:none;border:none;color:var(--blue);width:34px;height:34px;border-radius:8px;font-size:17px;font-weight:600;cursor:pointer}
 .month-switch button:active{background:var(--cell-3)}
@@ -40,7 +45,11 @@ body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:10
 .cat-pct{color:var(--lbl2);font-family:var(--mono);font-size:12px;width:32px;text-align:right}
 .cat-amt{font-family:var(--mono);font-weight:600;font-size:14.5px;width:92px;text-align:right}
 .avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff;flex-shrink:0}
-.day-head{font-size:13px;color:var(--lbl2);text-transform:uppercase;letter-spacing:.02em;margin:20px 16px 7px}
+.day-head{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--lbl2);text-transform:uppercase;letter-spacing:.02em;margin:20px 16px 7px}
+.day-head .day-sums{font-family:var(--mono);text-transform:none;font-size:12.5px;letter-spacing:0}
+.day-head .day-sums .d-inc{color:var(--green)}
+.day-head .day-sums .d-exp{color:var(--red)}
+.day-head .day-sums .d-sep{color:var(--lbl3);margin:0 6px}
 .row-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:13px;font-weight:700}
 .row-main{flex:1;min-width:0}
 .row-title{font-size:15.5px;font-weight:500}
@@ -55,7 +64,7 @@ body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:10
 .check-toggle.on svg{opacity:1}
 .debt-row.settled .row-title,.debt-row.settled .row-amt{text-decoration:line-through;opacity:.45}
 .debt-row.settled .row-sub{opacity:.45}
-.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;background:rgba(28,28,30,.86);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;padding:8px 0 calc(4px + env(safe-area-inset-bottom));z-index:20}
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;background:var(--cell);opacity:.96;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;padding:8px 0 calc(4px + env(safe-area-inset-bottom));z-index:20}
 .tab-item{flex:1;background:none;border:none;color:var(--lbl3);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-family:var(--font);padding:4px 0;cursor:pointer}
 .tab-item svg{width:25px;height:25px}
 .tab-item.active{color:var(--blue)}
@@ -85,6 +94,9 @@ body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:10
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12px;color:var(--lbl2);margin-bottom:6px;padding-left:2px}
 input[type=text],input[type=date],input[type=number]{width:100%;background:var(--cell-2);border:none;border-radius:10px;padding:12px 13px;color:var(--lbl);font-family:var(--font);font-size:15px;outline:none}
+input.invalid{background:rgba(255,69,58,.15);box-shadow:0 0 0 1.5px var(--red)}
+.err-msg{color:var(--red);font-size:12px;margin-top:6px;padding-left:2px;display:none}
+.err-msg.show{display:block}
 .chip-grid{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:8px 13px;border-radius:20px;background:var(--cell-2);font-size:13px;color:var(--lbl2);cursor:pointer}
 .chip.active{background:var(--blue);color:#fff}
@@ -106,7 +118,7 @@ input[type=text],input[type=date],input[type=number]{width:100%;background:var(-
 <div id="app">
 
 <div class="tab-screen active" id="tab-overview">
-  <div class="large-title">Учет</div>
+  <div class="top-bar"><h1 class="large-title">Учет</h1><button class="theme-btn" id="themeBtn">🌙</button></div>
   <div class="month-switch"><button data-nav="-1">‹</button><div class="month-label" id="monthLabel1">—</div><button data-nav="1">›</button></div>
   <div class="ios-list">
     <div class="ios-row"><span class="row-label">Доходы</span><span class="row-value green" id="sumIncome">0 ₸</span></div>
@@ -121,13 +133,13 @@ input[type=text],input[type=date],input[type=number]{width:100%;background:var(-
 </div>
 
 <div class="tab-screen" id="tab-history">
-  <div class="large-title">История</div>
+  <div class="top-bar"><h1 class="large-title">История</h1><button class="theme-btn" id="themeBtn2">🌙</button></div>
   <div class="month-switch"><button data-nav="-1">‹</button><div class="month-label" id="monthLabel2">—</div><button data-nav="1">›</button></div>
   <div id="txListWrap"></div>
 </div>
 
 <div class="tab-screen" id="tab-budgets">
-  <div class="large-title">Бюджеты</div>
+  <div class="top-bar"><h1 class="large-title">Бюджеты</h1><button class="theme-btn" id="themeBtn3">🌙</button></div>
   <div class="month-switch"><button data-nav="-1">‹</button><div class="month-label" id="monthLabel3">—</div><button data-nav="1">›</button></div>
   <div class="ios-list"><div class="budget-total"><span class="bt-label">Заложено на месяц</span><span class="bt-val" id="budgetTotal">0 ₸</span></div></div>
   <div class="section-label">Лимиты по категориям</div>
@@ -135,7 +147,7 @@ input[type=text],input[type=date],input[type=number]{width:100%;background:var(-
 </div>
 
 <div class="tab-screen" id="tab-debts">
-  <div class="large-title">Долги</div>
+  <div class="top-bar"><h1 class="large-title">Долги</h1><button class="theme-btn" id="themeBtn4">🌙</button></div>
   <div class="ios-list">
     <div class="ios-row"><span class="row-label">Мне должны</span><span class="row-value green" id="debtIn">0 ₸</span></div>
     <div class="ios-row"><span class="row-label">Я должен</span><span class="row-value red" id="debtOut">0 ₸</span></div>
@@ -158,10 +170,11 @@ input[type=text],input[type=date],input[type=number]{width:100%;background:var(-
   <div class="form-body">
     <div class="type-toggle"><button class="active expense" id="toggleExpense">Расход</button><button class="income" id="toggleIncome">Доход</button></div>
     <div class="amount-input"><input type="text" inputmode="numeric" id="amountInput" placeholder="0"><div class="cur">₸</div></div>
+    <div class="err-msg" id="amountErr">Введите сумму больше нуля</div>
     <div class="field"><label>Категория</label><div class="chip-grid" id="categoryChips"></div></div>
     <div class="field"><label>Дата</label><input type="date" id="dateInput"></div>
     <div class="field"><label>Повторять</label><div class="type-toggle" style="margin-bottom:0"><button class="active none" id="toggleOnce">Не повторять</button><button class="monthly" id="toggleMonthly">Каждый месяц</button></div></div>
-    <div class="field" id="recDayField" style="display:none"><label>День месяца (1–31)</label><input type="number" id="recDayInput" min="1" max="31" placeholder="10"></div>
+    <div class="field" id="recDayField" style="display:none"><label>День месяца (1–31)</label><input type="number" id="recDayInput" min="1" max="31" placeholder="10"><div class="err-msg" id="recDayErr">Введите число от 1 до 31</div></div>
     <div class="field"><label>Заметка</label><input type="text" id="noteInput" placeholder="например: продукты на неделю"></div>
     <button class="delete-btn" id="txDelete" style="display:none">Удалить операцию</button>
   </div>
@@ -173,7 +186,8 @@ input[type=text],input[type=date],input[type=number]{width:100%;background:var(-
   <div class="form-body">
     <div class="type-toggle"><button class="active in" id="toggleIn">Мне должны</button><button class="out" id="toggleOut">Я должен</button></div>
     <div class="amount-input"><input type="text" inputmode="numeric" id="debtAmountInput" placeholder="0"><div class="cur">₸</div></div>
-    <div class="field"><label>Имя</label><input type="text" id="debtPersonInput" placeholder="например: Айгуль"></div>
+    <div class="err-msg" id="debtAmountErr">Введите сумму больше нуля</div>
+    <div class="field"><label>Имя</label><input type="text" id="debtPersonInput" placeholder="например: Айгуль"><div class="err-msg" id="debtPersonErr">Введите имя</div></div>
     <div class="field"><label>Дата</label><input type="date" id="debtDateInput"></div>
     <div class="field"><label>Заметка</label><input type="text" id="debtNoteInput" placeholder="например: заняла на такси"></div>
     <button class="delete-btn" id="debtDelete" style="display:none">Удалить долг</button>
@@ -184,7 +198,7 @@ input[type=text],input[type=date],input[type=number]{width:100%;background:var(-
   <div class="sheet-handle"></div>
   <div class="sheet-nav"><button id="budgetCancel">Отмена</button><span class="sheet-title" id="budgetSheetTitle">Бюджет</span><button class="save" id="budgetSave">Готово</button></div>
   <div class="form-body">
-    <div class="field"><label>Лимит на категорию</label><input type="text" inputmode="numeric" id="budgetAmountInput" placeholder="0"></div>
+    <div class="field"><label>Лимит на категорию</label><input type="text" inputmode="numeric" id="budgetAmountInput" placeholder="0"><div class="err-msg" id="budgetAmountErr">Введите сумму больше нуля</div></div>
     <div class="field"><label>Категория</label><div class="chip-grid" id="budgetChips"></div></div>
     <button class="delete-btn" id="budgetDelete" style="display:none">Убрать лимит</button>
   </div>
@@ -209,6 +223,36 @@ const fmt=n=>Math.round(n).toLocaleString('ru-RU')+' ₸';
 const catColor=(type,name)=>(type==='expense'?EXP_CATS:INC_CATS).find(c=>c.name===name)?.color||'#98989D';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+/* ---------- THEME ---------- */
+const THEMES=['auto','dark','light'];
+const THEME_ICONS={auto:'⚙️',dark:'🌙',light:'☀️'};
+const THEME_LABELS={auto:'Авто',dark:'Тёмная',light:'Светлая'};
+let theme='auto';
+const mq=window.matchMedia('(prefers-color-scheme: light)');
+
+function applyTheme(){
+  let effective=theme;
+  if(theme==='auto')effective=mq.matches?'light':'dark';
+  document.documentElement.setAttribute('data-theme',effective==='light'?'light':'');
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute('content',effective==='light'?'#F2F2F7':'#000000');
+  const icon=THEME_ICONS[theme];
+  const title='Тема: '+THEME_LABELS[theme]+' (нажмите, чтобы переключить)';
+  ['themeBtn','themeBtn2','themeBtn3','themeBtn4'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b){b.textContent=icon;b.title=title}
+  });
+}
+function loadTheme(){try{const t=localStorage.getItem('kassa_theme');if(THEMES.includes(t))theme=t}catch(e){}}
+function saveTheme(){try{localStorage.setItem('kassa_theme',theme)}catch(e){}}
+function nextTheme(){const i=THEMES.indexOf(theme);theme=THEMES[(i+1)%THEMES.length];saveTheme();applyTheme()}
+['themeBtn','themeBtn2','themeBtn3','themeBtn4'].forEach(id=>{
+  const b=document.getElementById(id);
+  if(b)b.addEventListener('click',nextTheme);
+});
+mq.addEventListener('change',()=>{if(theme==='auto')applyTheme()});
+
+/* ---------- STORAGE ---------- */
 function loadAll(){
   try{txs=JSON.parse(localStorage.getItem('kassa_transactions')||'[]')}catch(e){txs=[]}
   try{debts=JSON.parse(localStorage.getItem('kassa_debts')||'[]')}catch(e){debts=[]}
@@ -225,6 +269,7 @@ function monthKey(d){return d.getFullYear()+'-'+d.getMonth()}
 function monthKeyFromStr(s){const d=new Date(s+'T00:00:00');return monthKey(d)}
 function txsForMonth(){return txs.filter(t=>monthKeyFromStr(t.date)===monthKey(viewDate))}
 
+/* ---------- RECURRING ---------- */
 function runRecurring(){
   const now=new Date();
   const curKey=monthKey(now);
@@ -249,6 +294,7 @@ function runRecurring(){
   if(changed)saveTxs();
 }
 
+/* ---------- TABS / MONTH ---------- */
 document.querySelectorAll('.tab-item').forEach(btn=>{
   btn.addEventListener('click',()=>{
     activeTab=btn.dataset.tab;
@@ -265,10 +311,11 @@ document.querySelectorAll('.month-switch button').forEach(btn=>{
   });
 });
 
+/* ---------- RENDER ---------- */
 function render(){
   if(!loaded)return;
   const label=MONTHS_NOM[viewDate.getMonth()]+' '+viewDate.getFullYear();
-  ['monthLabel1','monthLabel2','monthLabel3'].forEach(id=>document.getElementById(id).textContent=label);
+  ['monthLabel1','monthLabel2','monthLabel3'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=label});
   const list=txsForMonth();
   renderSummary(list);
   renderChart(list);
@@ -299,7 +346,7 @@ function renderChart(list){
   }
   try{
     const ctx=document.getElementById('catChart').getContext('2d');
-    chart=new Chart(ctx,{type:'doughnut',data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>catColor('expense',e[0])),borderColor:'#1C1C1E',borderWidth:2}]},options:{cutout:'72%',plugins:{legend:{display:false}},animation:{duration:350}}});
+    chart=new Chart(ctx,{type:'doughnut',data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>catColor('expense',e[0])),borderColor:getComputedStyle(document.documentElement).getPropertyValue('--cell').trim()||'#1C1C1E',borderWidth:2}]},options:{cutout:'72%',plugins:{legend:{display:false}},animation:{duration:350}}});
   }catch(e){}
   document.getElementById('catList').innerHTML=entries.map(([name,amt])=>{
     const pct=total?Math.round(amt/total*100):0;
@@ -319,11 +366,18 @@ function renderHistory(list){
   el.innerHTML=days.map(day=>{
     const d=new Date(day+'T00:00:00');
     const label=d.getDate()+' '+MONTHS[d.getMonth()];
-    const rows=byDay[day].sort((a,b)=>(b.id||0)-(a.id||0)).map(t=>{
+    const dayTxs=byDay[day];
+    const dayInc=dayTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const dayExp=dayTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const sumsParts=[];
+    if(dayInc)sumsParts.push('<span class="d-inc">+'+fmt(dayInc)+'</span>');
+    if(dayExp)sumsParts.push('<span class="d-exp">−'+fmt(dayExp)+'</span>');
+    const sums=sumsParts.length?'<span class="day-sums">'+sumsParts.join('<span class="d-sep">·</span>')+'</span>':'';
+    const rows=dayTxs.sort((a,b)=>(b.id||0)-(a.id||0)).map(t=>{
       const rec=t.recurring==='monthly'?'<span class="rec-badge">🔁</span>':'';
       return '<div class="ios-row" data-tx="'+t.id+'"><div class="row-icon" style="background:'+catColor(t.type,t.category)+'">'+esc(t.category.slice(0,1))+'</div><div class="row-main"><div class="row-title">'+esc(t.category)+rec+'</div>'+(t.note?'<div class="row-sub">'+esc(t.note)+'</div>':'')+'</div><span class="row-amt '+t.type+'">'+(t.type==='expense'?'−':'+')+fmt(t.amount)+'</span><span class="chevron">›</span></div>';
     }).join('');
-    return '<div class="day-head">'+label+'</div><div class="ios-list">'+rows+'</div>';
+    return '<div class="day-head"><span>'+label+'</span>'+sums+'</div><div class="ios-list">'+rows+'</div>';
   }).join('');
   el.querySelectorAll('[data-tx]').forEach(row=>{
     row.addEventListener('click',()=>openTxSheet(Number(row.dataset.tx)));
@@ -336,13 +390,10 @@ function renderBudgets(list){
   const expenses=list.filter(t=>t.type==='expense');
   const spentByCat={};
   expenses.forEach(t=>{spentByCat[t.category]=(spentByCat[t.category]||0)+t.amount});
-
   const totalBudget=Object.values(monthBudgets).reduce((s,v)=>s+v,0);
   document.getElementById('budgetTotal').textContent=fmt(totalBudget);
-
   const el=document.getElementById('budgetList');
-  const cats=EXP_CATS;
-  el.innerHTML=cats.map(c=>{
+  el.innerHTML=EXP_CATS.map(c=>{
     const limit=monthBudgets[c.name]||0;
     const spent=spentByCat[c.name]||0;
     const pct=limit?Math.min(100,Math.round(spent/limit*100)):0;
@@ -353,7 +404,6 @@ function renderBudgets(list){
     const valText=limit?fmt(spent)+' / '+fmt(limit):(spent?fmt(spent)+' (без лимита)':'не задан');
     return '<div class="budget-row" data-budget="'+esc(c.name)+'"><div class="budget-top"><span class="cat-dot" style="background:'+c.color+'"></span><span class="b-name">'+esc(c.name)+'</span><span class="b-val '+cls+'">'+valText+'</span></div><div class="budget-bar"><div class="budget-bar-fill" style="width:'+(limit?pct:(spent?100:0))+'%;background:'+fillColor+'"></div></div></div>';
   }).join('');
-
   el.querySelectorAll('[data-budget]').forEach(row=>{
     row.addEventListener('click',()=>openBudgetSheet(row.dataset.budget));
   });
@@ -396,9 +446,20 @@ function renderDebts(){
   });
 }
 
+/* ---------- VALIDATION HELPERS ---------- */
+function setInvalid(input,errEl,show){
+  if(show){input.classList.add('invalid');if(errEl)errEl.classList.add('show')}
+  else{input.classList.remove('invalid');if(errEl)errEl.classList.remove('show')}
+}
+function clearInvalid(input,errEl){setInvalid(input,errEl,false)}
+
+/* ---------- TX SHEET ---------- */
 const txOverlay=document.getElementById('txOverlay');
 const amountInput=document.getElementById('amountInput');
+const amountErr=document.getElementById('amountErr');
 const dateInput=document.getElementById('dateInput');
+const recDayInput=document.getElementById('recDayInput');
+const recDayErr=document.getElementById('recDayErr');
 
 function renderTxChips(){
   const cats=txType==='expense'?EXP_CATS:INC_CATS;
@@ -424,10 +485,12 @@ function openTxSheet(id){
   txRecDay=t&&t.recDay?t.recDay:new Date().getDate();
   amountInput.value=t?String(t.amount):'';
   dateInput.value=t?t.date:new Date().toISOString().slice(0,10);
-  document.getElementById('recDayInput').value=txRecDay;
+  recDayInput.value=txRecDay;
   document.getElementById('noteInput').value=t?(t.note||''):'';
   document.getElementById('txSheetTitle').textContent=t?'Изменить операцию':'Новая операция';
   document.getElementById('txDelete').style.display=t?'block':'none';
+  clearInvalid(amountInput,amountErr);
+  clearInvalid(recDayInput,recDayErr);
   updateTxToggle();
   renderTxChips();
   txOverlay.classList.add('show');
@@ -445,20 +508,35 @@ document.getElementById('toggleExpense').addEventListener('click',()=>{txType='e
 document.getElementById('toggleIncome').addEventListener('click',()=>{txType='income';updateTxToggle();renderTxChips()});
 document.getElementById('toggleOnce').addEventListener('click',()=>{txRecurring='none';updateTxToggle()});
 document.getElementById('toggleMonthly').addEventListener('click',()=>{txRecurring='monthly';updateTxToggle()});
-document.getElementById('recDayInput').addEventListener('input',e=>{
+amountInput.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'');clearInvalid(amountInput,amountErr)});
+recDayInput.addEventListener('input',e=>{
   let v=parseInt(e.target.value.replace(/[^0-9]/g,'')||'0',10);
   if(v>31)v=31; if(v<0)v=0;
   txRecDay=v;
   e.target.value=v||'';
+  clearInvalid(recDayInput,recDayErr);
 });
-amountInput.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'')});
 
 document.getElementById('txSave').addEventListener('click',()=>{
   const amount=Number(amountInput.value);
-  if(!amount||amount<=0){amountInput.focus();return}
   const date=dateInput.value||new Date().toISOString().slice(0,10);
   const note=document.getElementById('noteInput').value.trim();
-  const recDay=txRecurring==='monthly'?Math.min(31,Math.max(1,txRecDay||1)):null;
+  let ok=true;
+
+  if(!amount||amount<=0){setInvalid(amountInput,amountErr,true);ok=false}
+  else clearInvalid(amountInput,amountErr);
+
+  let recDay=null;
+  if(txRecurring==='monthly'){
+    recDay=parseInt(recDayInput.value||'0',10);
+    if(!recDay||recDay<1||recDay>31){setInvalid(recDayInput,recDayErr,true);ok=false}
+    else clearInvalid(recDayInput,recDayErr);
+  }
+  if(!ok){
+    if(amountInput.classList.contains('invalid'))amountInput.focus();
+    else if(recDayInput.classList.contains('invalid'))recDayInput.focus();
+    return;
+  }
 
   if(txEditId){
     const t=txs.find(x=>x.id===txEditId);
@@ -476,14 +554,21 @@ document.getElementById('txSave').addEventListener('click',()=>{
   render();
 });
 document.getElementById('txDelete').addEventListener('click',()=>{
-  if(txEditId){txs=txs.filter(t=>t.id!==txEditId);saveTxs()}
+  if(txEditId){
+    if(!confirm('Удалить эту операцию?'))return;
+    txs=txs.filter(t=>t.id!==txEditId);
+    saveTxs();
+  }
   closeTxSheet();
   render();
 });
 
+/* ---------- DEBT SHEET ---------- */
 const debtOverlay=document.getElementById('debtOverlay');
 const debtAmountInput=document.getElementById('debtAmountInput');
+const debtAmountErr=document.getElementById('debtAmountErr');
 const debtPersonInput=document.getElementById('debtPersonInput');
+const debtPersonErr=document.getElementById('debtPersonErr');
 const debtDateInput=document.getElementById('debtDateInput');
 const debtNoteInput=document.getElementById('debtNoteInput');
 
@@ -501,6 +586,8 @@ function openDebtSheet(id){
   debtNoteInput.value=d?(d.note||''):'';
   document.getElementById('debtSheetTitle').textContent=d?'Изменить долг':'Новый долг';
   document.getElementById('debtDelete').style.display=d?'block':'none';
+  clearInvalid(debtAmountInput,debtAmountErr);
+  clearInvalid(debtPersonInput,debtPersonErr);
   updateDebtToggle();
   debtOverlay.classList.add('show');
 }
@@ -510,14 +597,28 @@ document.getElementById('debtCancel').addEventListener('click',closeDebtSheet);
 debtOverlay.addEventListener('click',e=>{if(e.target===debtOverlay)closeDebtSheet()});
 document.getElementById('toggleIn').addEventListener('click',()=>{debtDir='in';updateDebtToggle()});
 document.getElementById('toggleOut').addEventListener('click',()=>{debtDir='out';updateDebtToggle()});
-debtAmountInput.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'')});
+debtAmountInput.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'');clearInvalid(debtAmountInput,debtAmountErr)});
+debtPersonInput.addEventListener('input',()=>clearInvalid(debtPersonInput,debtPersonErr));
 
 document.getElementById('debtSave').addEventListener('click',()=>{
   const amount=Number(debtAmountInput.value);
-  if(!amount||amount<=0){debtAmountInput.focus();return}
-  const person=debtPersonInput.value.trim()||'Без имени';
+  const person=debtPersonInput.value.trim();
   const date=debtDateInput.value||new Date().toISOString().slice(0,10);
   const note=debtNoteInput.value.trim();
+  let ok=true;
+
+  if(!amount||amount<=0){setInvalid(debtAmountInput,debtAmountErr,true);ok=false}
+  else clearInvalid(debtAmountInput,debtAmountErr);
+
+  if(!person){setInvalid(debtPersonInput,debtPersonErr,true);ok=false}
+  else clearInvalid(debtPersonInput,debtPersonErr);
+
+  if(!ok){
+    if(debtAmountInput.classList.contains('invalid'))debtAmountInput.focus();
+    else if(debtPersonInput.classList.contains('invalid'))debtPersonInput.focus();
+    return;
+  }
+
   if(debtEditId){
     const d=debts.find(x=>x.id===debtEditId);
     Object.assign(d,{direction:debtDir,amount,person,date,note});
@@ -529,13 +630,19 @@ document.getElementById('debtSave').addEventListener('click',()=>{
   render();
 });
 document.getElementById('debtDelete').addEventListener('click',()=>{
-  if(debtEditId){debts=debts.filter(d=>d.id!==debtEditId);saveDebts()}
+  if(debtEditId){
+    if(!confirm('Удалить этот долг?'))return;
+    debts=debts.filter(d=>d.id!==debtEditId);
+    saveDebts();
+  }
   closeDebtSheet();
   render();
 });
 
+/* ---------- BUDGET SHEET ---------- */
 const budgetOverlay=document.getElementById('budgetOverlay');
 const budgetAmountInput=document.getElementById('budgetAmountInput');
+const budgetAmountErr=document.getElementById('budgetAmountErr');
 
 function renderBudgetChips(){
   document.getElementById('budgetChips').innerHTML=EXP_CATS.map(c=>'<div class="chip '+(c.name===budgetEditCat?'active':'')+'" data-bcat="'+esc(c.name)+'">'+esc(c.name)+'</div>').join('');
@@ -557,6 +664,7 @@ function openBudgetSheet(cat){
     document.getElementById('budgetSheetTitle').textContent='Новый лимит';
     document.getElementById('budgetDelete').style.display='none';
   }
+  clearInvalid(budgetAmountInput,budgetAmountErr);
   renderBudgetChips();
   budgetOverlay.classList.add('show');
 }
@@ -564,11 +672,12 @@ function closeBudgetSheet(){budgetOverlay.classList.remove('show')}
 
 document.getElementById('budgetCancel').addEventListener('click',closeBudgetSheet);
 budgetOverlay.addEventListener('click',e=>{if(e.target===budgetOverlay)closeBudgetSheet()});
-budgetAmountInput.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'')});
+budgetAmountInput.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'');clearInvalid(budgetAmountInput,budgetAmountErr)});
 
 document.getElementById('budgetSave').addEventListener('click',()=>{
   const amount=Number(budgetAmountInput.value);
-  if(!amount||amount<=0){budgetAmountInput.focus();return}
+  if(!amount||amount<=0){setInvalid(budgetAmountInput,budgetAmountErr,true);budgetAmountInput.focus();return}
+  clearInvalid(budgetAmountInput,budgetAmountErr);
   const key=monthKey(viewDate);
   if(!budgets[key])budgets[key]={};
   budgets[key][budgetEditCat]=amount;
@@ -577,6 +686,7 @@ document.getElementById('budgetSave').addEventListener('click',()=>{
   render();
 });
 document.getElementById('budgetDelete').addEventListener('click',()=>{
+  if(!confirm('Убрать лимит для этой категории?'))return;
   const key=monthKey(viewDate);
   if(budgets[key]&&budgets[key][budgetEditCat]!==undefined){
     delete budgets[key][budgetEditCat];
@@ -586,6 +696,9 @@ document.getElementById('budgetDelete').addEventListener('click',()=>{
   render();
 });
 
+/* ---------- INIT ---------- */
+loadTheme();
+applyTheme();
 loadAll();
 })();
 </script>
