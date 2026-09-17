@@ -63,6 +63,9 @@ body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:10
 .row-amt.income{color:var(--green)}.row-amt.expense{color:var(--red)}
 .chevron{color:var(--lbl3);font-size:14px;margin-left:2px}
 .rec-badge{font-size:11px;color:var(--lbl2);margin-left:4px}
+.transit-badge{font-size:11px;color:var(--lbl3);margin-left:4px}
+.ios-row.is-transit .row-title,.ios-row.is-transit .row-amt{color:var(--lbl3)}
+.ios-row.is-transit .row-icon{opacity:.4}
 .check-toggle{width:24px;height:24px;border-radius:50%;border:2px solid var(--lbl3);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .check-toggle.on{background:var(--green);border-color:var(--green)}
 .check-toggle svg{width:13px;height:13px;opacity:0}
@@ -117,7 +120,7 @@ input.invalid{background:rgba(255,69,58,.15);box-shadow:0 0 0 1.5px var(--red)}
 .b-val.over{color:var(--red)}.b-val.warn{color:var(--orange)}.b-val.ok{color:var(--lbl2)}
 .budget-bar{height:6px;background:var(--cell-3);border-radius:3px;overflow:hidden}
 .budget-bar-fill{height:100%;border-radius:3px;transition:width .3s ease}
-.file-drop{border:2px dashed var(--lbl3);border-radius:14px;padding:30px 20px;text-align:center;cursor:pointer;margin:0 16px 18px;transition:border-color .2s}
+.file-drop{border:2px dashed var(--lbl3);border-radius:14px;padding:30px 20px;text-align:center;cursor:pointer;margin:0 16px 18px}
 .file-drop:active,.file-drop.drag{border-color:var(--blue);background:var(--cell-2)}
 .file-drop .fd-icon{font-size:36px;margin-bottom:8px}
 .file-drop .fd-title{font-size:15px;font-weight:600;margin-bottom:4px}
@@ -128,8 +131,10 @@ input.invalid{background:rgba(255,69,58,.15);box-shadow:0 0 0 1.5px var(--red)}
 .imp-summary .is-val{font-family:var(--mono);font-size:15px;font-weight:600}
 .imp-summary .is-val.green{color:var(--green)}
 .imp-summary .is-val.red{color:var(--red)}
+.imp-summary .is-val.orange{color:var(--orange)}
 .imp-row{padding:11px 16px;border-bottom:.5px solid var(--sep);display:flex;gap:10px;align-items:center;font-size:13.5px}
 .imp-row:last-child{border-bottom:none}
+.imp-row.is-transit{opacity:.5}
 .imp-row .ir-date{font-family:var(--mono);font-size:11.5px;color:var(--lbl2);width:52px;flex-shrink:0}
 .imp-row .ir-amt{font-family:var(--mono);font-size:13px;font-weight:600;width:82px;text-align:right;flex-shrink:0}
 .imp-row .ir-amt.income{color:var(--green)}
@@ -243,30 +248,35 @@ input.invalid{background:rgba(255,69,58,.15);box-shadow:0 0 0 1.5px var(--red)}
   </div>
 </div></div>
 
+<!-- === END PART 1 === -->
+
+  
 <script>
 (function(){
 /* ================= CATEGORIES ================= */
 const EXP_CATS=[
   {name:'Еда',color:'#FF453A'},
   {name:'Транспорт',color:'#FF9F0A'},
-  {name:'Жильё',color:'#FFD60A'},
   {name:'Развлечения',color:'#BF5AF2'},
   {name:'Здоровье',color:'#FF375F'},
-  {name:'Одежда',color:'#5E5CE6'},
+  {name:'Покупки',color:'#5E5CE6'},
   {name:'Связь',color:'#64D2FF'},
   {name:'Садака',color:'#30D158'},
-  {name:'Комп клуб',color:'#5AC8FA'},
-  {name:'Тревел',color:'#FF9500'},
-  {name:'Мойка авто',color:'#64D2FF'},
-  {name:'Депозит Отбасы',color:'#AF52DE'},
+  {name:'Travel',color:'#FF9500'},
   {name:'Снятие наличных',color:'#8E8E93'},
-  {name:'Прочее',color:'#98989D'}
+  {name:'Коммуналка',color:'#FFD60A'},
+  {name:'Депозит Отбасы',color:'#AF52DE'},
+  {name:'Депозит BCC (несъёмный)',color:'#9B59B6'},
+  {name:'Депозит BCC (съёмный)',color:'#8E44AD'},
+  {name:'Депозит Kaspi',color:'#7D3C98'},
+  {name:'Кредиты',color:'#E74C3C'},
+  {name:'Прочее',color:'#98989D'},
+  {name:'Прочее (транзит)',color:'#636366'}
 ];
 const INC_CATS=[
   {name:'Зарплата',color:'#30D158'},
-  {name:'Подработка',color:'#66D4CF'},
+  {name:'Доход',color:'#66D4CF'},
   {name:'Подарки',color:'#63E6BE'},
-  {name:'Доход',color:'#30D158'},
   {name:'Прочее',color:'#98989D'}
 ];
 const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -274,35 +284,56 @@ const MONTHS_NOM=['Январь','Февраль','Март','Апрель','М�
 
 /* ================= CATEGORY RULES ================= */
 const RULES=[
-  {keys:['Улжан А.','Rafik A.'],cat:'Еда'},
-  {keys:['MAGNUM','SMALL','JARDI RETAIL','YUMI','MINISO','LCW','BILLION.CO','Yumi_Yumi','ИП КОСБАТЫРОВА','ИП Муслим','IP RAHIMOVA','IP STABAEVA','IP ASKARBEKOVA','IP DAURENBEKOVA','IP PALAUSHY','IP YUMI_KIDS','DAILY TENGIZ','Madina'],cat:'Еда'},
-  {keys:['AZS','QazAvtoJol','Парковка','Въезд на территорию','YANDEX.GO'],cat:'Транспорт'},
-  {keys:['YANDEX.PLUS','AUTOOPLATA TELE2','Meganet','интернет'],cat:'Связь'},
-  {keys:['Аптека','Алмасат'],cat:'Здоровье'},
-  {keys:['Nur Mubarak','садака','мечеть','пожертвование'],cat:'Садака'},
-  {keys:['DARKNET','комп клуб'],cat:'Комп клуб'},
-  {keys:['Kaspi Travel','Travel','Aviasales','Booking'],cat:'Тревел'},
-  {keys:['Аппарат самообслуживания'],cat:'Мойка авто'}
+  {keys:['Улжан А.','Rafik A.','MAGNUM','SMALL','JARDI RETAIL','IP STABAEVA','IPSTABAYEVA','IP ASKARBEKOVA','IP DAURENBEKOVA','IP PALAUSHY','IP KOCHERE PATISSERIE','SHAFRAN CAFE','МАГАЗИН НА БУЛЬВАРЕ','МАГАЗИН ДИАНА','НЕСИБЕ','ИП "БЕРЕКЕ-2"','РЕСТОРАН SOPRA','ALTYN DASTARKHAN','МАНАСА','ИП ТУРАБАЕВ','ИП БОГДАНОВ','ИП ИРИСКИН','ИП АИЛИС','QULPYNAI','RAHMET SHOP','ИП ПАК СМАЙЛ','ИП МЕЙРМАНҰЛЫ','ИПZIRA FOOD','ИП САУРАНБЕКОВА','ИП "КОЛБАЕВА"','ИП ƏБДІЛХАКІМ','ИП BRO','ХАДИША','СПАСИБО ЗА ПОКУПКУ','GRAND RETAIL','ИП КОСБАТЫРОВА','ИП МУСЛИМ','MADINA','DAILY TENGIZ','IP RAHMETOVA','YUMI_YUMI'],cat:'Еда'},
+  {keys:['AZS','ROYAL PETROL','SINOOIL','ГЕЛИОС','ЖАРКЕНТ ГАЗ СЕРВИС','QAZAVTOJOL','ПАРКОВКА','ВЪЕЗД НА ТЕРРИТОРИЮ','YANDEX.GO','АЛМАТЫ ПАРКИНГ','АППАРАТ САМООБСЛУЖИВАНИЯ'],cat:'Транспорт'},
+  {keys:['DARKNET','КОМП КЛУБ','DUNE KONAEV','MY KIDS PARK','APM AOF','МАДИМК'],cat:'Развлечения'},
+  {keys:['АПТЕКА','АЛМАСАТ','EUROPHARMA'],cat:'Здоровье'},
+  {keys:['MINISO','LCW','BILLION.CO','UDOBNO','T.S','FIX PRICE','ЖЕНСКИЙ ОДЕЖДА','ИП АСКАРБЕКОВА','YUMI_KIDS','YUMI KIDS'],cat:'Покупки'},
+  {keys:['TELE2','YANDEX.PLUS','ИНТЕРНЕТ','ACTIV'],cat:'Связь'},
+  {keys:['NUR MUBARAK','САДАКА','МЕЧЕТЬ','ПОЖЕРТВОВАНИЕ'],cat:'Садака'},
+  {keys:['KASPI TRAVEL','AVIASALES','BOOKING'],cat:'Travel'},
+  {keys:['KASPI RED','KASPI КРЕДИТ','KASPI KREDIT'],cat:'Кредиты'}
 ];
 
-function categorise(desc,amount,sign){
+/* ================= CATEGORISE ================= */
+function categorise(desc,amount,sign,bank){
   const d=String(desc||'');
-  if(sign>0)return 'Доход';
   const up=d.toUpperCase();
-  if(/(ОТБАСЫ|7333|733\b)/i.test(d))return 'Депозит Отбасы';
+  if(sign>0)return 'Доход';
+  // Каспи: перевод на свой счет
+  if(/ПЕРЕВОД НА СВОЙ СЧЕТ|НА KASPI ДЕПОЗИТ/i.test(d)){
+    if(/KASPI RED/i.test(d))return 'Кредиты';
+    if(/KASPI КРЕДИТ/i.test(d))return 'Кредиты';
+    return 'Депозит Kaspi';
+  }
+  // BCC: депозиты по типу+сумме
+  if(bank==='bcc'){
+    if(/ПЛАТЕЖ/i.test(up)){
+      if(Math.abs(amount)>=50000)return 'Депозит Отбасы';
+      if(Math.abs(amount)===8000)return 'Депозит Отбасы';
+      if(Math.abs(amount)===14000)return 'Связь';
+      if(Math.abs(amount)<25000 && Math.abs(amount)%1!==0)return 'Коммуналка';
+    }
+    if(/ПЕРЕВОД/i.test(up)){
+      if(Math.abs(amount)===100000)return 'Депозит BCC (съёмный)';
+      if(Math.abs(amount)===50000)return 'Депозит BCC (несъёмный)';
+    }
+  }
+  // Снятие
+  if(/СНЯТИЕ|БАНКОМАТ/i.test(d))return 'Снятие наличных';
+  // Правила по ключевым словам
   for(const r of RULES){
     for(const k of r.keys){
       if(up.indexOf(k.toUpperCase())>=0)return r.cat;
     }
   }
-  if(/СНЯТИЕ|БАНКОМАТ/i.test(d))return 'Снятие наличных';
-  if(/ПОПОЛНЕНИЕ|ЗАЧИСЛЕНИЕ|ЗАРПЛАТА/i.test(d))return 'Доход';
-  if(sign<0 && Math.abs(amount)>=50000 && /(ПЕРЕВОД|ПЛАТЕЖ)/i.test(d))return 'Депозит Отбасы';
+  // Доход
+  if(/ПОПОЛНЕНИЕ|ЗАЧИСЛЕНИЕ|ЗАРПЛАТА|MEGANET/i.test(d))return 'Доход';
   return 'Прочее';
 }
 
 /* ================= STATE ================= */
-let txs=[],debts=[],budgets={};
+let txs=[],debts=[],budgets={},userRules={};
 let activeTab='overview';
 let viewDate=new Date();
 let chart=null,loaded=false;
@@ -312,7 +343,11 @@ let budgetEditCat=null;
 let parsedRows=[];
 
 const fmt=n=>Math.round(n).toLocaleString('ru-RU')+' ₸';
-const catColor=(type,name)=>(type==='expense'?EXP_CATS:INC_CATS).find(c=>c.name===name)?.color||'#98989D';
+const catColor=(type,name)=>{
+  const arr=type==='expense'?EXP_CATS:INC_CATS;
+  const c=arr.find(c=>c.name===name);
+  return c?c.color:'#98989D';
+};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ================= THEME ================= */
@@ -345,6 +380,7 @@ function loadAll(){
   try{txs=JSON.parse(localStorage.getItem('kassa_transactions')||'[]')}catch(e){txs=[]}
   try{debts=JSON.parse(localStorage.getItem('kassa_debts')||'[]')}catch(e){debts=[]}
   try{budgets=JSON.parse(localStorage.getItem('kassa_budgets')||'{}')}catch(e){budgets={}}
+  try{userRules=JSON.parse(localStorage.getItem('kassa_userrules')||'{}')}catch(e){userRules={}}
   loaded=true;
   runRecurring();
   render();
@@ -352,11 +388,11 @@ function loadAll(){
 function saveTxs(){try{localStorage.setItem('kassa_transactions',JSON.stringify(txs))}catch(e){}}
 function saveDebts(){try{localStorage.setItem('kassa_debts',JSON.stringify(debts))}catch(e){}}
 function saveBudgets(){try{localStorage.setItem('kassa_budgets',JSON.stringify(budgets))}catch(e){}}
+function saveUserRules(){try{localStorage.setItem('kassa_userrules',JSON.stringify(userRules))}catch(e){}}
 
 function monthKey(d){return d.getFullYear()+'-'+d.getMonth()}
 function monthKeyFromStr(s){const d=new Date(s+'T00:00:00');return monthKey(d)}
-function txsForMonth(){return txs.filter(t=>monthKeyFromStr(t.date)===monthKey(viewDate))}
-function fingerprint(date,amount,desc){return date+'|'+Math.round(amount)+'|'+String(desc||'').trim().toLowerCase().slice(0,40)}
+function txsForMonth(){return txs.filter(t=>!t.isTransit && monthKeyFromStr(t.date)===monthKey(viewDate))}
 
 /* ================= RECURRING ================= */
 function runRecurring(){
@@ -445,26 +481,28 @@ function renderChart(list){
 
 function renderHistory(list){
   const el=document.getElementById('txListWrap');
-  if(list.length===0){
+  const allForMonth=txs.filter(t=>monthKeyFromStr(t.date)===monthKey(viewDate));
+  if(allForMonth.length===0){
     el.innerHTML='<div class="empty-note">Операций пока нет — нажмите «+», чтобы добавить</div>';
     return;
   }
   const byDay={};
-  list.forEach(t=>{(byDay[t.date]=byDay[t.date]||[]).push(t)});
+  allForMonth.forEach(t=>{(byDay[t.date]=byDay[t.date]||[]).push(t)});
   const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   el.innerHTML=days.map(day=>{
     const d=new Date(day+'T00:00:00');
     const label=d.getDate()+' '+MONTHS[d.getMonth()];
     const dayTxs=byDay[day];
-    const dayInc=dayTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-    const dayExp=dayTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const dayInc=dayTxs.filter(t=>t.type==='income'&&!t.isTransit).reduce((s,t)=>s+t.amount,0);
+    const dayExp=dayTxs.filter(t=>t.type==='expense'&&!t.isTransit).reduce((s,t)=>s+t.amount,0);
     const sp=[];
     if(dayInc)sp.push('<span class="d-inc">+'+fmt(dayInc)+'</span>');
     if(dayExp)sp.push('<span class="d-exp">−'+fmt(dayExp)+'</span>');
     const sums=sp.length?'<span class="day-sums">'+sp.join('<span class="d-sep">·</span>')+'</span>':'';
     const rows=dayTxs.sort((a,b)=>(b.id||0)-(a.id||0)).map(t=>{
       const rec=t.recurring==='monthly'?'<span class="rec-badge">🔁</span>':'';
-      return '<div class="ios-row" data-tx="'+t.id+'"><div class="row-icon" style="background:'+catColor(t.type,t.category)+'">'+esc(t.category.slice(0,1))+'</div><div class="row-main"><div class="row-title">'+esc(t.category)+rec+'</div>'+(t.note?'<div class="row-sub">'+esc(t.note)+'</div>':'')+'</div><span class="row-amt '+t.type+'">'+(t.type==='expense'?'−':'+')+fmt(t.amount)+'</span><span class="chevron">›</span></div>';
+      const tr=t.isTransit?'<span class="transit-badge">🔄 транзит</span>':'';
+      return '<div class="ios-row '+(t.isTransit?'is-transit':'')+'" data-tx="'+t.id+'"><div class="row-icon" style="background:'+catColor(t.type,t.category)+'">'+esc(t.category.slice(0,1))+'</div><div class="row-main"><div class="row-title">'+esc(t.category)+rec+tr+'</div>'+(t.note?'<div class="row-sub">'+esc(t.note)+'</div>':'')+'</div><span class="row-amt '+t.type+'">'+(t.type==='expense'?'−':'+')+fmt(t.amount)+'</span><span class="chevron">›</span></div>';
     }).join('');
     return '<div class="day-head"><span>'+label+'</span>'+sums+'</div><div class="ios-list">'+rows+'</div>';
   }).join('');
@@ -535,6 +573,9 @@ function renderDebts(){
   });
 }
 
+// === END PART 2 ===
+
+ 
 /* ================= VALIDATION ================= */
 function setInvalid(input,errEl,show){
   if(!input)return;
@@ -628,6 +669,9 @@ document.getElementById('txSave').addEventListener('click',()=>{
     const t=txs.find(x=>x.id===txEditId);
     Object.assign(t,{type:txType,amount,category:txCat,date,note,recurring:txRecurring==='monthly'?'monthly':null,recDay});
     if(txRecurring!=='monthly'){delete t.recurring;delete t.recDay;delete t.lastCreated}
+    // Запомнить ручную правку категории
+    if(note)userRules[note.toLowerCase().slice(0,40)]=txCat;
+    saveUserRules();
   }else{
     const obj={id:Date.now(),type:txType,amount,category:txCat,date,note};
     if(txRecurring==='monthly'){obj.recurring='monthly';obj.recDay=recDay}
@@ -820,25 +864,64 @@ async function processFiles(files){
       console.warn('Ошибка чтения файла:',f.name,err);
     }
   }
-  const usedIdx=new Set();
+  // Шаг 1: межбанковские пары (BCC ↔ Kaspi, одна сумма, ±1 день, разные знаки)
+  const used=new Set();
+  const dayMs=24*60*60*1000;
   for(let i=0;i<all.length;i++){
-    if(usedIdx.has(i))continue;
+    if(used.has(i))continue;
     const a=all[i];
-    if(!a)continue;
     for(let j=i+1;j<all.length;j++){
-      if(usedIdx.has(j))continue;
+      if(used.has(j))continue;
       const b=all[j];
-      if(!b)continue;
       if(a.bank===b.bank)continue;
-      if(a.date!==b.date)continue;
       if(Math.abs(a.amount)!==Math.abs(b.amount))continue;
       if(Math.sign(a.amount)===Math.sign(b.amount))continue;
-      usedIdx.add(i);usedIdx.add(j);
+      const d1=new Date(a.date+'T00:00:00').getTime();
+      const d2=new Date(b.date+'T00:00:00').getTime();
+      if(Math.abs(d1-d2)>dayMs)continue;
+      used.add(i);used.add(j);
+      a.isTransit=true;b.isTransit=true;
       break;
     }
   }
-  parsedRows=all.filter((_,i)=>!usedIdx.has(i));
-  renderImportPreview(all.length,usedIdx.size/2);
+  // Шаг 2: внутрибанковские пары (Пополнение +X ↔ Перевод −X в тот же день)
+  for(let i=0;i<all.length;i++){
+    if(used.has(i))continue;
+    const a=all[i];
+    if(a.amount<=0)continue; // ищем пополнения
+    for(let j=0;j<all.length;j++){
+      if(i===j||used.has(j))continue;
+      const b=all[j];
+      if(a.bank!==b.bank)continue;
+      if(Math.abs(a.amount)!==Math.abs(b.amount))continue;
+      if(b.amount>=0)continue;
+      const d1=new Date(a.date+'T00:00:00').getTime();
+      const d2=new Date(b.date+'T00:00:00').getTime();
+      if(Math.abs(d1-d2)>dayMs)continue;
+      // Есть ли третья операция — покупка той же суммы?
+      let hasPurchase=false;
+      for(let k=0;k<all.length;k++){
+        if(k===i||k===j||used.has(k))continue;
+        const c=all[k];
+        if(c.bank!==a.bank)continue;
+        if(Math.abs(c.amount)!==Math.abs(a.amount))continue;
+        if(c.amount>=0)continue;
+        if(/ПОКУПКА|СНЯТИЕ/i.test(c.desc)){hasPurchase=true;break}
+      }
+      if(hasPurchase){
+        // оставляем покупку, обе помечаем транзитом
+        used.add(i);used.add(j);
+        a.isTransit=true;b.isTransit=true;
+      }else{
+        // оставляем перевод −, пополнение + → транзит
+        used.add(i);
+        a.isTransit=true;
+      }
+      break;
+    }
+  }
+  parsedRows=all;
+  renderImportPreview(parsedRows);
 }
 
 function parseXlsx(file){
@@ -865,7 +948,7 @@ function parseXlsx(file){
 
           let headerIdx=-1;
           for(let i=0;i<arr.length;i++){
-            const row=(arr[i]||[]).map(safeLow);
+            const row=Array.from(arr[i]||[],safeLow);
             if(bank==='bcc'){
               if(row.some(c=>c.indexOf('дата операции')>=0) && row.some(c=>c.indexOf('описание')>=0)){
                 headerIdx=i;break;
@@ -878,7 +961,7 @@ function parseXlsx(file){
           }
           if(headerIdx<0)return;
 
-         const head=Array.from(arr[headerIdx]||[],safeLow);
+          const head=Array.from(arr[headerIdx]||[],safeLow);
           const col={};
           if(bank==='bcc'){
             col.date=head.findIndex(c=>c.indexOf('дата операции')>=0);
@@ -894,7 +977,6 @@ function parseXlsx(file){
           for(let i=headerIdx+1;i<arr.length;i++){
             const row=arr[i];
             if(!row||row.length===0)continue;
-
             const rawDate = col.date>=0 ? row[col.date] : null;
             let rawDesc='';
             if(bank==='kaspi'){
@@ -905,7 +987,6 @@ function parseXlsx(file){
               rawDesc = col.desc>=0 ? safeStr(row[col.desc]) : '';
             }
             const rawAmount = col.amount>=0 ? row[col.amount] : null;
-
             if(rawDate==null || rawAmount==null)continue;
 
             const date = normalizeDate(rawDate);
@@ -916,20 +997,21 @@ function parseXlsx(file){
             if(!desc)continue;
             if(/остаток|текущий остаток|доступно на|период выписки|остаток на дату|лимит на снятие|зарплатных денег|другие пополнения/i.test(desc))continue;
 
+            // Пользовательская память — приоритет
+            let cat;
+            const norm=desc.toLowerCase().slice(0,40);
+            if(userRules[norm])cat=userRules[norm];
+            else cat=categorise(desc,amount,Math.sign(amount),bank);
+
             rows.push({
-              bank,
-              date,
-              amount,
-              desc,
-              category: categorise(desc, amount, Math.sign(amount)),
-              type: amount>0 ? 'income' : 'expense'
+              bank,date,amount,desc,category:cat,
+              type: amount>0 ? 'income' : 'expense',
+              isTransit: false
             });
           }
         });
         resolve(rows);
-      }catch(err){
-        reject(err);
-      }
+      }catch(err){reject(err)}
     };
     reader.onerror=reject;
     reader.readAsArrayBuffer(file);
@@ -959,36 +1041,45 @@ function normalizeAmount(v){
   return isFinite(n)?n:NaN;
 }
 
-function renderImportPreview(total,paired){
-  if(parsedRows.length===0 && total===0){
+function renderImportPreview(rows){
+  if(rows.length===0){
     importResult.innerHTML='<div class="imp-warn">Не удалось найти операции. Убедитесь, что это .xlsx-файл из BCC или Kaspi.</div>';
     return;
   }
-  const inc=parsedRows.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0);
-  const exp=parsedRows.filter(r=>r.amount<0).reduce((s,r)=>s+Math.abs(r.amount),0);
+  const real=rows.filter(r=>!r.isTransit);
+  const transit=rows.filter(r=>r.isTransit);
+  const inc=real.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0);
+  const exp=real.filter(r=>r.amount<0).reduce((s,r)=>s+Math.abs(r.amount),0);
+  const transitIn=transit.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0);
+  const transitOut=transit.filter(r=>r.amount<0).reduce((s,r)=>s+Math.abs(r.amount),0);
+  const transitBalance=transitIn-transitOut;
+
   let html='<div class="ios-list" style="margin:0 0 12px">';
-  html+='<div class="imp-summary"><span class="is-label">Найдено операций</span><span class="is-val">'+parsedRows.length+'</span></div>';
-  html+='<div class="imp-summary"><span class="is-label">Внутренних переводов убрано</span><span class="is-val">'+paired+'</span></div>';
-  html+='<div class="imp-summary"><span class="is-label">Доходы</span><span class="is-val green">+'+fmt(inc)+'</span></div>';
-  html+='<div class="imp-summary"><span class="is-label">Расходы</span><span class="is-val red">−'+fmt(exp)+'</span></div>';
+  html+='<div class="imp-summary"><span class="is-label">Найдено операций</span><span class="is-val">'+rows.length+'</span></div>';
+  html+='<div class="imp-summary"><span class="is-label">Транзитных</span><span class="is-val">'+transit.length+'</span></div>';
+  html+='<div class="imp-summary"><span class="is-label">Доходы (реальные)</span><span class="is-val green">+'+fmt(inc)+'</span></div>';
+  html+='<div class="imp-summary"><span class="is-label">Расходы (реальные)</span><span class="is-val red">−'+fmt(exp)+'</span></div>';
+  const cls=Math.abs(transitBalance)<1?'green':(transitBalance>0?'green':'orange');
+  html+='<div class="imp-summary"><span class="is-label">Сальдо транзита</span><span class="is-val '+cls+'">'+(transitBalance>=0?'+':'')+fmt(transitBalance)+'</span></div>';
   html+='</div>';
+
   html+='<div style="font-size:12px;color:var(--lbl2);text-transform:uppercase;margin:14px 0 6px">Предпросмотр</div>';
   html+='<div class="ios-list" style="margin:0">';
-  parsedRows.slice(0,50).forEach(r=>{
+  rows.slice(0,80).forEach(r=>{
     const cls=r.amount>0?'income':'expense';
-    html+='<div class="imp-row"><span class="ir-date">'+r.date.slice(5)+'</span><span class="ir-desc">'+esc(r.desc.slice(0,40))+'</span><span class="ir-cat">'+esc(r.category)+'</span><span class="ir-amt '+cls+'">'+(r.amount>0?'+':'−')+fmt(Math.abs(r.amount))+'</span></div>';
+    html+='<div class="imp-row '+(r.isTransit?'is-transit':'')+'"><span class="ir-date">'+r.date.slice(5)+'</span><span class="ir-desc">'+esc(r.desc.slice(0,40))+'</span><span class="ir-cat">'+esc(r.category)+'</span><span class="ir-amt '+cls+'">'+(r.amount>0?'+':'−')+fmt(Math.abs(r.amount))+'</span></div>';
   });
-  if(parsedRows.length>50)html+='<div class="imp-row" style="color:var(--lbl2)">...и ещё '+(parsedRows.length-50)+' операций</div>';
+  if(rows.length>80)html+='<div class="imp-row" style="color:var(--lbl2)">...и ещё '+(rows.length-80)+' операций</div>';
   html+='</div>';
   importResult.innerHTML=html;
-  document.getElementById('importDo').disabled=parsedRows.length===0;
+  document.getElementById('importDo').disabled=rows.length===0;
 }
 
 document.getElementById('importDo').addEventListener('click',()=>{
-  const seen=new Set(txs.map(t=>fingerprint(t.date,t.amount,t.note||'')));
+  const seen=new Set(txs.map(t=>t.date+'|'+Math.round(t.amount)+'|'+String(t.note||'').trim().toLowerCase().slice(0,40)));
   let added=0,skipped=0;
   parsedRows.forEach(r=>{
-    const fp=fingerprint(r.date,Math.abs(r.amount),r.desc);
+    const fp=r.date+'|'+Math.round(Math.abs(r.amount))+'|'+r.desc.trim().toLowerCase().slice(0,40);
     if(seen.has(fp)){skipped++;return}
     seen.add(fp);
     txs.push({
@@ -997,7 +1088,8 @@ document.getElementById('importDo').addEventListener('click',()=>{
       amount:Math.abs(r.amount),
       category:r.category,
       date:r.date,
-      note:r.desc.slice(0,200)
+      note:r.desc.slice(0,200),
+      isTransit: r.isTransit
     });
     added++;
   });
@@ -1019,3 +1111,5 @@ loadAll();
 </script>
 </body>
 </html>
+
+// === END PART 3 ===
