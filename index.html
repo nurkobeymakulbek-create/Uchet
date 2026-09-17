@@ -82,6 +82,7 @@ body{background:var(--bg);color:var(--lbl);font-family:var(--font);min-height:10
 .sheet-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:.5px solid var(--sep)}
 .sheet-nav button{background:none;border:none;color:var(--blue);font-size:16.5px;font-family:var(--font);cursor:pointer;padding:4px 2px}
 .sheet-nav button.save{font-weight:600}
+.sheet-nav button:disabled{color:var(--lbl3);opacity:.5}
 .sheet-title{font-size:16px;font-weight:600}
 .form-body{padding:18px 16px 6px}
 .type-toggle{display:flex;background:var(--cell-2);border-radius:9px;padding:2px;margin-bottom:20px}
@@ -285,17 +286,18 @@ const RULES=[
 ];
 
 function categorise(desc,amount,sign){
+  const d=String(desc||'');
   if(sign>0)return 'Доход';
-  const up=desc.toUpperCase();
-  if(/(ОТБАСЫ|7333|733\b)/i.test(desc))return 'Депозит Отбасы';
+  const up=d.toUpperCase();
+  if(/(ОТБАСЫ|7333|733\b)/i.test(d))return 'Депозит Отбасы';
   for(const r of RULES){
     for(const k of r.keys){
       if(up.indexOf(k.toUpperCase())>=0)return r.cat;
     }
   }
-  if(/СНЯТИЕ|БАНКОМАТ/i.test(desc))return 'Снятие наличных';
-  if(/ПОПОЛНЕНИЕ|ЗАЧИСЛЕНИЕ|ЗАРПЛАТА/i.test(desc))return 'Доход';
-  if(sign<0 && Math.abs(amount)>=50000 && /(ПЕРЕВОД|ПЛАТЕЖ)/i.test(desc))return 'Депозит Отбасы';
+  if(/СНЯТИЕ|БАНКОМАТ/i.test(d))return 'Снятие наличных';
+  if(/ПОПОЛНЕНИЕ|ЗАЧИСЛЕНИЕ|ЗАРПЛАТА/i.test(d))return 'Доход';
+  if(sign<0 && Math.abs(amount)>=50000 && /(ПЕРЕВОД|ПЛАТЕЖ)/i.test(d))return 'Депозит Отбасы';
   return 'Прочее';
 }
 
@@ -311,7 +313,7 @@ let parsedRows=[];
 
 const fmt=n=>Math.round(n).toLocaleString('ru-RU')+' ₸';
 const catColor=(type,name)=>(type==='expense'?EXP_CATS:INC_CATS).find(c=>c.name===name)?.color||'#98989D';
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ================= THEME ================= */
 const THEMES=['auto','dark','light'];
@@ -535,6 +537,7 @@ function renderDebts(){
 
 /* ================= VALIDATION ================= */
 function setInvalid(input,errEl,show){
+  if(!input)return;
   if(show){input.classList.add('invalid');if(errEl)errEl.classList.add('show')}
   else{input.classList.remove('invalid');if(errEl)errEl.classList.remove('show')}
 }
@@ -782,7 +785,7 @@ const fileDrop=document.getElementById('fileDrop');
 const importResult=document.getElementById('importResult');
 
 document.querySelectorAll('[data-open-import]').forEach(b=>{
-  b.addEventListener('click',()=>openImport());
+  b.addEventListener('click',openImport);
 });
 function openImport(){
   parsedRows=[];
@@ -799,7 +802,6 @@ fileInput.addEventListener('change',e=>{
   if(files.length)processFiles(files);
 });
 
-// drag-n-drop
 ['dragenter','dragover'].forEach(ev=>fileDrop.addEventListener(ev,e=>{e.preventDefault();fileDrop.classList.add('drag')}));
 ['dragleave','drop'].forEach(ev=>fileDrop.addEventListener(ev,e=>{e.preventDefault();fileDrop.classList.remove('drag')}));
 fileDrop.addEventListener('drop',e=>{
@@ -818,7 +820,6 @@ async function processFiles(files){
       console.warn('Ошибка чтения файла:',f.name,err);
     }
   }
-  // Найти пары BCC↔Kaspi: одинаковая сумма, одинаковая дата, разные знаки, разные банки
   const usedIdx=new Set();
   for(let i=0;i<all.length;i++){
     if(usedIdx.has(i))continue;
@@ -827,6 +828,7 @@ async function processFiles(files){
     for(let j=i+1;j<all.length;j++){
       if(usedIdx.has(j))continue;
       const b=all[j];
+      if(!b)continue;
       if(a.bank===b.bank)continue;
       if(a.date!==b.date)continue;
       if(Math.abs(a.amount)!==Math.abs(b.amount))continue;
@@ -836,7 +838,7 @@ async function processFiles(files){
     }
   }
   parsedRows=all.filter((_,i)=>!usedIdx.has(i));
-  renderImportPreview(all.length-usedIdx.size,usedIdx.size/2);
+  renderImportPreview(all.length,usedIdx.size/2);
 }
 
 function parseXlsx(file){
@@ -855,14 +857,12 @@ function parseXlsx(file){
           const arr=XLSX.utils.sheet_to_json(sh,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
           if(!arr||!arr.length)return;
 
-          // Определение банка по первым 30 строкам
           const flat=arr.slice(0,30).map(r=>(r||[]).map(safeStr).join(' ')).join(' ');
           let bank='unknown';
           if(/ЦЕНТРКРЕДИТ|KCJBKZKX|bcc\.kz/i.test(flat))bank='bcc';
           else if(/Kaspi\s*Bank|Kaspi\s*Gold|kaspi\.kz/i.test(flat))bank='kaspi';
           if(bank==='unknown')return;
 
-          // Найти строку заголовков
           let headerIdx=-1;
           for(let i=0;i<arr.length;i++){
             const row=(arr[i]||[]).map(safeLow);
@@ -891,7 +891,6 @@ function parseXlsx(file){
             col.details=head.findIndex(c=>c.indexOf('детали')>=0);
           }
 
-          // Парсить операции
           for(let i=headerIdx+1;i<arr.length;i++){
             const row=arr[i];
             if(!row||row.length===0)continue;
@@ -942,7 +941,7 @@ function normalizeDate(v){
     const y=v.getFullYear(),m=String(v.getMonth()+1).padStart(2,'0'),d=String(v.getDate()).padStart(2,'0');
     return y+'-'+m+'-'+d;
   }
-  const s=String(v).trim();
+  const s=String(v==null?'':v).trim();
   let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(m)return m[1]+'-'+m[2]+'-'+m[3];
   m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
@@ -954,7 +953,7 @@ function normalizeDate(v){
 }
 
 function normalizeAmount(v){
-  let s=String(v).replace(/\s/g,'').replace(/₸|KZT|тг|тенге/gi,'').replace(',','.');
+  let s=String(v==null?'':v).replace(/\s/g,'').replace(/₸|KZT|тг|тенге/gi,'').replace(',','.');
   s=s.replace(/[^0-9.\-+]/g,'');
   const n=parseFloat(s);
   return isFinite(n)?n:NaN;
@@ -1003,7 +1002,7 @@ document.getElementById('importDo').addEventListener('click',()=>{
     added++;
   });
   saveTxs();
-  if(added>0){
+  if(added>0 && parsedRows.length){
     const d=new Date(parsedRows[0].date+'T00:00:00');
     viewDate=new Date(d.getFullYear(),d.getMonth(),1);
   }
