@@ -878,7 +878,7 @@ function parseXlsx(file){
           }
           if(headerIdx<0)return;
 
-          const head=(arr[headerIdx]||[]).map(safeLow);
+         const head=Array.from(arr[headerIdx]||[],safeLow);
           const col={};
           if(bank==='bcc'){
             col.date=head.findIndex(c=>c.indexOf('дата операции')>=0);
