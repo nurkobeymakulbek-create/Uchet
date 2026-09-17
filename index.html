@@ -847,64 +847,90 @@ function parseXlsx(file){
         const data=new Uint8Array(e.target.result);
         const wb=XLSX.read(data,{type:'array',cellDates:true});
         const rows=[];
+        const safeStr=v=>String(v==null?'':v);
+        const safeLow=v=>safeStr(v).toLowerCase();
+
         wb.SheetNames.forEach(sheetName=>{
           const sh=wb.Sheets[sheetName];
           const arr=XLSX.utils.sheet_to_json(sh,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
-          // Определение банка
-          const flat=arr.slice(0,30).map(r=>r.join(' ')).join(' ');
+          if(!arr||!arr.length)return;
+
+          // Определение банка по первым 30 строкам
+          const flat=arr.slice(0,30).map(r=>(r||[]).map(safeStr).join(' ')).join(' ');
           let bank='unknown';
           if(/ЦЕНТРКРЕДИТ|KCJBKZKX|bcc\.kz/i.test(flat))bank='bcc';
           else if(/Kaspi\s*Bank|Kaspi\s*Gold|kaspi\.kz/i.test(flat))bank='kaspi';
           if(bank==='unknown')return;
-          // Найти заголовки
+
+          // Найти строку заголовков
           let headerIdx=-1;
           for(let i=0;i<arr.length;i++){
-            const row=arr[i].map(c=>String(c||'').toLowerCase());
-            if(bank==='bcc' && row.some(c=>c.includes('дата операции')) && row.some(c=>c.includes('описание'))){
-              headerIdx=i;break;
-            }
-            if(bank==='kaspi' && row[0] && row[0].includes('дата') && row.some(c=>c.includes('сумма')) && row.some(c=>c.includes('операция'))){
-              headerIdx=i;break;
+            const row=(arr[i]||[]).map(safeLow);
+            if(bank==='bcc'){
+              if(row.some(c=>c.indexOf('дата операции')>=0) && row.some(c=>c.indexOf('описание')>=0)){
+                headerIdx=i;break;
+              }
+            }else{
+              if(row[0] && row[0].indexOf('дата')>=0 && row.some(c=>c.indexOf('сумма')>=0) && row.some(c=>c.indexOf('операция')>=0)){
+                headerIdx=i;break;
+              }
             }
           }
           if(headerIdx<0)return;
-          const head=arr[headerIdx].map(c=>String(c||'').toLowerCase());
+
+          const head=(arr[headerIdx]||[]).map(safeLow);
           const col={};
           if(bank==='bcc'){
-            col.date=head.findIndex(c=>c.includes('дата операции'));
-            col.desc=head.findIndex(c=>c.includes('описание'));
-            col.amount=head.findIndex(c=>c.includes('сумма в kzt'));
+            col.date=head.findIndex(c=>c.indexOf('дата операции')>=0);
+            col.desc=head.findIndex(c=>c.indexOf('описание')>=0);
+            col.amount=head.findIndex(c=>c.indexOf('сумма в kzt')>=0);
           }else{
-            col.date=head.findIndex(c=>c==='дата'||c.includes('дата'));
-            col.amount=head.findIndex(c=>c.includes('сумма'));
-            col.desc=head.findIndex(c=>c.includes('операция'));
-            col.details=head.findIndex(c=>c.includes('детали'));
+            col.date=head.findIndex(c=>c==='дата'||c.indexOf('дата')>=0);
+            col.amount=head.findIndex(c=>c.indexOf('сумма')>=0);
+            col.desc=head.findIndex(c=>c.indexOf('операция')>=0);
+            col.details=head.findIndex(c=>c.indexOf('детали')>=0);
           }
-          // Парсить строки после заголовка
+
+          // Парсить операции
           for(let i=headerIdx+1;i<arr.length;i++){
             const row=arr[i];
             if(!row||row.length===0)continue;
-            const rawDate=row[col.date];
-            const rawDesc=(bank==='kaspi'?
-              ((row[col.desc]||'')+' '+(row[col.details]||'')).trim():
-              String(row[col.desc]||''));
-            const rawAmount=row[col.amount];
-            if(!rawDate||!rawAmount)continue;
-            const date=normalizeDate(rawDate);
-            const amount=normalizeAmount(rawAmount);
-            if(!date||!isFinite(amount)||amount===0)continue;
-            const desc=String(rawDesc).trim().replace(/\s+/g,' ');
+
+            const rawDate = col.date>=0 ? row[col.date] : null;
+            let rawDesc='';
+            if(bank==='kaspi'){
+              const d1 = col.desc>=0 ? safeStr(row[col.desc]) : '';
+              const d2 = col.details>=0 ? safeStr(row[col.details]) : '';
+              rawDesc = (d1+' '+d2).trim();
+            }else{
+              rawDesc = col.desc>=0 ? safeStr(row[col.desc]) : '';
+            }
+            const rawAmount = col.amount>=0 ? row[col.amount] : null;
+
+            if(rawDate==null || rawAmount==null)continue;
+
+            const date = normalizeDate(rawDate);
+            const amount = normalizeAmount(rawAmount);
+            if(!date || !isFinite(amount) || amount===0)continue;
+
+            const desc = safeStr(rawDesc).trim().replace(/\s+/g,' ');
             if(!desc)continue;
-            if(/остаток|текущий остаток|доступно на|период выписки|остаток на дату/i.test(desc))continue;
+            if(/остаток|текущий остаток|доступно на|период выписки|остаток на дату|лимит на снятие|зарплатных денег|другие пополнения/i.test(desc))continue;
+
             rows.push({
-              bank,date,amount,desc,
-              category:categorise(desc,amount,Math.sign(amount)),
-              type:amount>0?'income':'expense'
+              bank,
+              date,
+              amount,
+              desc,
+              category: categorise(desc, amount, Math.sign(amount)),
+              type: amount>0 ? 'income' : 'expense'
             });
           }
         });
         resolve(rows);
-      }catch(err){reject(err)}
+      }catch(err){
+        reject(err);
+      }
     };
     reader.onerror=reject;
     reader.readAsArrayBuffer(file);
