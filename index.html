@@ -236,8 +236,7 @@ const fmt=n=>Math.round(n).toLocaleString('ru-RU')+' ₸';
 const catColor=(type,name)=>(type==='expense'?EXP_CATS:INC_CATS).find(c=>c.name===name)?.color||'#98989D';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* ============================================================
-   === GSheets: СИНХРОНИЗАЦИЯ === */
+/* === GSheets: Синхронизация через iframe (без CORS) === */
 const syncDot=document.getElementById('syncDot');
 function setSync(state){
   if(!syncDot)return;
@@ -248,24 +247,47 @@ function setSync(state){
   else syncDot.style.background='var(--lbl3)';
 }
 
-// Отправка одной записи в таблицу. action: 'addTx' | 'addDebt' | 'updateDebt' | 'saveBudget'
-async function gsheetSend(action,payload){
-  if(!GSHEET_URL||GSHEET_URL.indexOf('ВСТАВЬТЕ')===0)return false;
+// Отправка данных через iframe — обходит CORS
+function gsheetSend(action,payload){
+  if(!GSHEET_URL||GSHEET_URL.indexOf('ВСТАВЬТЕ')===0)return;
   setSync('syncing');
-  try{
-    const res=await fetch(GSHEET_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'}, // Apps Script принимает text/plain без preflight
-      body:JSON.stringify(Object.assign({key:GSHEET_KEY,action:action},payload))
-    });
-    const json=await res.json();
-    if(json.ok){setSync('ok');return true}
-    setSync('err');return false;
-  }catch(e){
-    console.warn('gsheetSend error:',e);
-    setSync('err');
-    return false;
+  
+  // Создаём уникальное имя для iframe
+  const iframeName = 'gsheet_frame_' + Date.now();
+  const iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  
+  // Создаём форму внутри страницы
+  const form = document.createElement('form');
+  form.action = GSHEET_URL;
+  form.method = 'POST';
+  form.target = iframeName;
+  form.style.display = 'none';
+  
+  // Добавляем все поля в форму
+  const data = Object.assign({key:GSHEET_KEY, action:action}, payload);
+  for(const k in data){
+    if(data[k] === null || data[k] === undefined) continue;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = k;
+    input.value = data[k];
+    form.appendChild(input);
   }
+  
+  document.body.appendChild(form);
+  form.submit();
+  
+  // Через пару секунд убираем форму и iframe
+  setTimeout(()=>{
+    try{
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+      setSync('ok');
+    }catch(e){}
+  }, 2500);
 }
 
 // Чтение всех данных из таблицы
